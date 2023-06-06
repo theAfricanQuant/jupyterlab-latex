@@ -117,7 +117,7 @@ class LatexBuildHandler(APIHandler):
                 full_latex_sequence,
                 ]
         else:
-            command_sequence = command_sequence * c.run_times
+            command_sequence *= c.run_times
 
         return command_sequence
 
@@ -130,7 +130,7 @@ class LatexBuildHandler(APIHandler):
             true if BibTeX should be run.
 
         """
-        return any([re.match(r'.*\.bib', x) for x in set(glob.glob("*"))])
+        return any(re.match(r'.*\.bib', x) for x in set(glob.glob("*")))
 
 
     @gen.coroutine
@@ -187,12 +187,7 @@ class LatexBuildHandler(APIHandler):
             out = (f"The file at `{tex_file_path}` does not end with .tex. "
                     "You can only run LaTeX on a file ending with .tex.")
         else:
-            with latex_cleanup(
-                cleanup=c.cleanup,
-                workdir=os.path.dirname(tex_file_path),
-                whitelist=[tex_base_name+'.pdf', tex_base_name+'.synctex.gz'],
-                greylist=[tex_base_name+'.aux']
-                ):
+            with latex_cleanup(cleanup=c.cleanup, workdir=os.path.dirname(tex_file_path), whitelist=[f'{tex_base_name}.pdf', f'{tex_base_name}.synctex.gz'], greylist=[f'{tex_base_name}.aux']):
                 bibtex = self.bib_condition()
                 cmd_sequence = self.build_tex_cmd_sequence(tex_base_name,
                                                            run_bibtex=bibtex)

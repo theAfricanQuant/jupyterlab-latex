@@ -79,14 +79,12 @@ class LatexSynctexHandler(APIHandler):
         """
         c = LatexConfig(config=self.config)
 
-        cmd = (
+        return (
             c.synctex_command,
             'edit',
             '-o',
-            f'{pos["page"]}:{pos["x"]}:{pos["y"]}:{self.notebook_dir}/{pdf_name+".pdf"}'
-            )
-
-        return cmd
+            f'{pos["page"]}:{pos["x"]}:{pos["y"]}:{self.notebook_dir}/{pdf_name}.pdf',
+        )
 
     def build_synctex_view_cmd(self, tex_name, pos):
         """Builds tuple that will be used to call the synctex view shell command.
@@ -105,19 +103,17 @@ class LatexSynctexHandler(APIHandler):
 
         """
         c = LatexConfig(config=self.config)
-        pdf_path = os.path.join(self.notebook_dir, tex_name+".pdf")
-        tex_path = os.path.join(self.notebook_dir, tex_name+".tex")
+        pdf_path = os.path.join(self.notebook_dir, f"{tex_name}.pdf")
+        tex_path = os.path.join(self.notebook_dir, f"{tex_name}.tex")
 
-        cmd = (
+        return (
             c.synctex_command,
             'view',
             '-i',
             f'{pos["line"]}:{pos["column"]}:{tex_path}',
             '-o',
-            f'{pdf_path}'
-            )
-
-        return cmd
+            f'{pdf_path}',
+        )
 
 
     @gen.coroutine
@@ -181,10 +177,10 @@ class LatexSynctexHandler(APIHandler):
         if not os.path.exists(full_file_path):
             self.set_status(403)
             out = f"Request cannot be completed; no file at `{full_file_path}`."
-        elif not os.path.exists(os.path.join(workdir, base_name + '.synctex.gz')):
+        elif not os.path.exists(os.path.join(workdir, f'{base_name}.synctex.gz')):
             self.set_status(403)
             out = f"Request cannot be completed; no SyncTeX file found in `{workdir}`."
-        elif ext != '.tex' and ext != '.pdf':
+        elif ext not in ['.tex', '.pdf']:
             self.set_status(400)
             out = (f"The file `{ext}` does not end with .tex of .pdf. "
                     "You can only run SyncTex on a file ending with .tex or .pdf.")
@@ -217,7 +213,7 @@ def parse_synctex_response(response, pos):
             response, flags=re.DOTALL)
     if match is None:
         raise Exception(f'Unable to parse SyncTeX response: {response}')
-    lines = match.group(1).lower().replace(' ', '').split('\n')
+    lines = match[1].lower().replace(' ', '').split('\n')
     result = {}
     for l in lines:
         components = l.split(":")
